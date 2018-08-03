@@ -54,15 +54,19 @@ class DetectorAPI:
 
         im_height, im_width, _ = image.shape
         boxes_list = [None for i in range(boxes.shape[1])]
+        boxes_center = [None for i in range(boxes.shape[1])]
         for i in range(boxes.shape[1]):
             boxes_list[i] = (int(boxes[0, i, 0] * im_height),
                              int(boxes[0, i, 1] * im_width),
                              int(boxes[0, i, 2] * im_height),
                              int(boxes[0, i, 3] * im_width))
-        import pdb
-        pdb.set_trace()
+            boxes_center[i] = (int((int(boxes[0, i, 1] * im_width) + int(boxes[0, i, 3] * im_width)) / 2),
+                               int((int(boxes[0, i, 0] * im_height) + int(boxes[0, i, 2] * im_height)) / 2))
 
-        return boxes_list, scores[0].tolist(), [int(x) for x in classes[0].tolist()], int(num[0])
+        # import pdb
+        # pdb.set_trace()
+
+        return boxes_list, boxes_center, scores[0].tolist(), [int(x) for x in classes[0].tolist()], int(num[0])
 
     def close(self):
         self.sess.close()
@@ -78,27 +82,33 @@ if __name__ == "__main__":
 
     while True:
         r, img = cap.read()
+        # img = cv2.imread(filename='/home/qbuser/Desktop/coffee_2215906b.jpg')
         img = cv2.resize(img, (1280, 720))
 
-        boxes, scores, classes, num = odapi.processFrame(img)
+        boxes, centers, scores, classes, num = odapi.processFrame(img)
 
+        previous_center = ()
         # Visualization of the results of a detection.
-
         for i in range(len(boxes)):
             # Class 1 represents human
             if classes[i] == 1 and scores[i] > threshold:
                 box = boxes[i]
                 cv2.rectangle(img, (box[1], box[0]),
                               (box[3], box[2]), (255, 0, 0), 2)
+        for i in range(len(centers)):
+            # Class 1 represents human
+            if classes[i] == 1 and scores[i] > threshold:
+                center = centers[i]
+                if previous_center:
+                    cv2.line(img, previous_center, center, (255, 178, 0), 2)
+                else:
+                    previous_center = center
+                previous_center = center
+
 
         cv2.imshow("preview", img)
         key = cv2.waitKey(1)
         if key & 0xFF == ord('q'):
             break
 
-
-
-pip3.6 install  Cython
-pip3.6 install  contextlib2
-pip3.6 install  jupyter
-pip3.6 install  matplotlib
+    cv2.destroyAllWindows()
