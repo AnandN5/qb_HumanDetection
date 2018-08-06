@@ -7,6 +7,12 @@ import numpy as np
 import tensorflow as tf
 import cv2
 import time
+import seaborn as sns
+import pandas as pd
+import matplotlib.pyplot as plt
+
+bg_image = '/home/qbuser/Desktop/Screenshot from 2018-08-06 13-04-34.png'
+# map_img = mpimg.imread(bg_image)
 
 
 class DetectorAPI:
@@ -38,6 +44,11 @@ class DetectorAPI:
             'detection_classes:0')
         self.num_detections = self.detection_graph.get_tensor_by_name(
             'num_detections:0')
+
+    def getFrame(self, sec, cap):
+        cap.set(cv2.CAP_PROP_POS_MSEC, sec * 1000)
+        hasFrames, image = cap.read()
+        return hasFrames
 
     def processFrame(self, image):
         # Expand dimensions since the trained_model expects images to have shape: [1, None, None, 3]
@@ -79,14 +90,23 @@ if __name__ == "__main__":
     threshold = 0.7
     cap = cv2.VideoCapture(
         '/home/qbuser/Documents/Repos/big_data_works/office/HumanDetection-POC/qb_HumanDetection/resource/TownCentreXVID.avi')
-
-    while True:
+    cap.set(cv2.CAP_PROP_FPS, 60)
+    count = 0
+    framerate = 2
+    sec = 0
+    success = odapi.getFrame(sec, cap)
+    all_centers = []
+    while success:
+        count += 1
+        print(count)
+        sec = sec + framerate
+        sec = round(sec, 2)
+        success = odapi.getFrame(sec, cap)
         r, img = cap.read()
+
         # img = cv2.imread(filename='/home/qbuser/Desktop/coffee_2215906b.jpg')
         img = cv2.resize(img, (1280, 720))
-
         boxes, centers, scores, classes, num = odapi.processFrame(img)
-
         previous_center = ()
         # Visualization of the results of a detection.
         for i in range(len(boxes)):
@@ -99,14 +119,19 @@ if __name__ == "__main__":
             # Class 1 represents human
             if classes[i] == 1 and scores[i] > threshold:
                 center = centers[i]
-                if previous_center:
-                    cv2.line(img, previous_center, center, (255, 178, 0), 2)
-                else:
-                    previous_center = center
-                previous_center = center
+                all_centers.append(center)
 
+        if sec == 10:
+            points_array = np.asarray(all_centers)
+            df = pd.DataFrame(points_array, columns=['x', 'y'])
+            joint_kws = dict(gridsize=25)
+            sns_plot = sns.jointplot('x', 'y', data=df, kind="hex",
+                                     color="#4CB391", joint_kws=joint_kws)
+            sns_plot.fig.axes[0].invert_yaxis()
+            # plt.imshow(map_img, zorder=1, extent=[0.0, 4.8, 0.0, 6.4])
+            plt.show()
 
-        cv2.imshow("preview", img)
+        # cv2.imshow("preview", img)
         key = cv2.waitKey(1)
         if key & 0xFF == ord('q'):
             break
