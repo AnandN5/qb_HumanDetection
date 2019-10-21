@@ -44,7 +44,7 @@ Markdown==2.6.11
 MarkupSafe==1.0
 matplotlib==2.2.2
 mccabe==0.6.1
-nltk==3.3
+nltk==3.4.5
 numpy==1.14.4
 opencv-python==3.4.1.15
 ordereddict==1.1
