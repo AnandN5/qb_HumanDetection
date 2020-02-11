@@ -12,7 +12,7 @@ croniter==0.3.23
 cycler==0.10.0
 decorator==4.3.0
 dill==0.2.7.1
-Django==2.0.6
+Django==2.2.10
 django-webtest==1.9.3
 docutils==0.14
 flake8==3.5.0
